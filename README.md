@@ -6,11 +6,13 @@ Built at the National MedTech Hackathon, November 2026.
 
 **[Try the interactive demo →](https://faalfoolh.github.io/second-look/)**
 
+![Second Look website](docs/img/hero.png)
+
 Women having a heart attack are more likely than men to be sent home from A&E with a non-cardiac diagnosis. Common reasons are symptoms that don't look "typical" (nausea, back pain, fatigue), smaller ST elevation on the ECG, and a single troponin taken too early to rule anything out.
 
 Second Look runs at the moment a clinician discharges a patient with a non-cardiac label such as "anxiety" or "indigestion". It checks whether the heart attack work-up is actually complete, and stays silent when it is.
 
-![Second Look comparing the doctor's view with its own](docs/img/alert.png)
+![Second Look stopping Sarah's discharge: the doctor's view next to Second Look's](docs/img/second_look.png)
 
 ## What it checks
 
@@ -35,7 +37,7 @@ Five synthetic A&E patients, each with a real ECG:
 | Emma, 52 | Reflux, fully worked up | Silent |
 | James, 48 | Musculoskeletal pain, fully worked up | Silent |
 
-![Linda's ECG with the flagged leads in amber](docs/img/linda_ecg.png)
+![Linda's 12-lead ECG with flagged leads in amber, detected beats and the two measurement points on each beat](docs/img/ecg.png)
 
 ## ECG analysis
 
@@ -62,6 +64,8 @@ This is seven records chosen for the demo, not a validation study. Record 3956 i
 
 - **Website** (`docs/`, served by GitHub Pages): the interactive demo. Static HTML, CSS and JavaScript with hand-drawn SVG ECGs on standard 25 mm/s, 10 mm/mV paper. It needs no server, so it opens instantly.
 - **Streamlit app** (`app.py`): the original hackathon prototype.
+
+<img src="docs/img/mobile.png" alt="The website on a phone" width="260">
 
 Python is the source of truth. `scripts/export_web.py` runs the ECG signal processing and writes the signals, ST measurements, patients and every rule threshold to `docs/data/data.json`. `docs/engine.js` is a line-for-line JavaScript port of the rules engine, and the test suite checks it against the Python engine on more than 2,000 generated cases.
 
