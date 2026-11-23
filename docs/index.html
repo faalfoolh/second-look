@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Second Look</title>
+  <meta name="description" content="A discharge safety net for women with possible heart attack symptoms. Interactive prototype with real 12-lead ECGs.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M2 17h7l3-8 4 16 3-11 2 3h9' fill='none' stroke='%239f1239' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <p class="kicker">Clinical decision support prototype · National MedTech Hackathon 2026</p>
+      <h1>Second Look</h1>
+      <p class="lede">Before a woman with possible heart attack symptoms is sent home from A&amp;E, Second Look checks that the work-up is actually complete. When it is, it stays silent.</p>
+      <div class="facts">
+        <div class="fact"><span class="fact-n">23–46%</span><span class="fact-t">of occlusion heart attacks met standard STEMI criteria on the ECG in recent emergency-department studies.</span><span class="fact-s">Meyers et al. 2021 · Lindow et al. 2026</span></div>
+        <div class="fact"><span class="fact-n">1.5&nbsp;mm</span><span class="fact-t">ST-elevation threshold in V2–V3 for women, lower than for men, because healthy women's ST segments sit lower.</span><span class="fact-s">Fourth Universal Definition of MI, 2018</span></div>
+        <div class="fact"><span class="fact-n">2×</span><span class="fact-t">as many women were diagnosed with a heart attack when a female-specific troponin threshold was used.</span><span class="fact-s">High-STEACS, BMJ 2015</span></div>
+      </div>
+      <nav class="hero-links">
+        <a class="btn btn-primary" href="#board">Open the A&amp;E board</a>
+        <a class="btn" href="#how">How it works</a>
+        <a class="btn" href="https://github.com/faalfoolh/second-look">Code on GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section id="board" class="wrap section">
+      <div class="section-head">
+        <p class="kicker">The A&amp;E board</p>
+        <h2>Five patients waiting for a decision</h2>
+        <p class="muted">Pick a patient, read the tests, then try to discharge them. The patients are invented; every ECG is a real recording.</p>
+      </div>
+      <div id="patients" class="patients" role="tablist" aria-label="Patients"></div>
+      <div class="board-tools"><button class="link" id="reset" type="button">Reset demo</button></div>
+    </section>
+
+    <section id="case" class="wrap case" aria-live="polite"></section>
+
+    <section id="report" class="wrap section">
+      <div class="section-head">
+        <p class="kicker">Hospital report</p>
+        <h2>This session's decisions</h2>
+        <p class="muted">Deployed in a hospital, this shows how often a discharge was stopped before the work-up was complete.</p>
+      </div>
+      <div id="report-body"></div>
+    </section>
+
+    <section id="how" class="wrap section how">
+      <div class="section-head">
+        <p class="kicker">How it works</p>
+        <h2>Four checks, run at the moment of discharge</h2>
+        <p class="muted">Second Look only runs when the discharge diagnosis is non-cardiac (anxiety, reflux, indigestion…) and the triage note mentions heart-type symptoms. Missing information is never treated as safe: it becomes a question.</p>
+      </div>
+      <ol class="pipeline">
+        <li><span class="pipe-n">01</span><h3>Triage note</h3><p>Free text mapped to 13 symptoms, including the ones women report more often: nausea, back or jaw pain, fatigue. Negation is handled, so "no chest pain" is not chest pain.</p></li>
+        <li><span class="pipe-n">02</span><h3>Troponin</h3><p>Flags a missing test, a single test under 3 h from onset, a rise between tests, or any value above the sex-specific 99th percentile.</p></li>
+        <li><span class="pipe-n">03</span><h3>12-lead ECG</h3><p>Measures ST deviation in every lead and looks for contiguous-lead patterns: STEMI-level, subtle elevation just below the thresholds, or depression.</p></li>
+        <li><span class="pipe-n">04</span><h3>History</h3><p>Pre-eclampsia, recent pregnancy (SCAD), early menopause, diabetes, repeat visits. With no record, four bedside questions.</p></li>
+      </ol>
+
+      <div class="two-col">
+        <div>
+          <h3>ECG signal processing</h3>
+          <ol class="steps">
+            <li>Band-pass filter each lead at 0.05–40 Hz (zero-phase Butterworth). The 0.05 Hz corner keeps the ST segment intact.</li>
+            <li>Detect R peaks in lead II, Pan-Tompkins style: 5–15 Hz band-pass, derivative, squaring, 150 ms moving-window integration, then snap to the largest deflection.</li>
+            <li>For every beat, measure the signal 100 ms after the R peak against the PR baseline 80 ms before it. Take the median across beats.</li>
+            <li>Apply sex- and age-specific STEMI thresholds by contiguous lead group (inferior, anterior, lateral), plus a "subtle" band just below them.</li>
+          </ol>
+          <p class="muted small">Turn on <em>Show measurement points</em> above any ECG to see the detected beats and the two points measured on each one.</p>
+        </div>
+        <div>
+          <h3>Results on the bundled ECGs</h3>
+          <div id="validation"></div>
+          <p class="muted small">Seven records picked for the demo, compared with PTB-XL's cardiologist labels. This is a sanity check, not a validation study.</p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <h3>Built with</h3>
+          <p>Python (NumPy, SciPy, wfdb) for the signal processing and the rules engine, covered by a pytest suite. This page runs a JavaScript port of the same engine, checked against the Python version on more than 2,000 generated cases on every test run. A Streamlit version of the prototype lives in the same repository.</p>
+        </div>
+        <div>
+          <h3>Limitations</h3>
+          <p><strong>Not a medical device and not for clinical use.</strong> Troponin limits are placeholders for one assay. The rules are a prototype of guideline logic, not a validated tool, and symptom reading is keyword-based.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap footer">
+    <p>ECGs from <a href="https://physionet.org/content/ptb-xl/">PTB-XL</a> (Wagner et al., <em>Scientific Data</em> 2020) via PhysioNet, CC BY 4.0. Patients are synthetic.</p>
+    <p>Built by a team of engineering and medical students at the National MedTech Hackathon, November 2026. <a href="https://github.com/faalfoolh/second-look">Source code</a></p>
+  </footer>
+</body>
+</html>

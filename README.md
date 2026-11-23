@@ -4,11 +4,13 @@
 
 Built at the National MedTech Hackathon, November 2026.
 
+**[Try the interactive demo →](https://faalfoolh.github.io/second-look/)**
+
 Women having a heart attack are more likely than men to be sent home from A&E with a non-cardiac diagnosis. Common reasons are symptoms that don't look "typical" (nausea, back pain, fatigue), smaller ST elevation on the ECG, and a single troponin taken too early to rule anything out.
 
 Second Look runs at the moment a clinician discharges a patient with a non-cardiac label such as "anxiety" or "indigestion". It checks whether the heart attack work-up is actually complete, and stays silent when it is.
 
-![Second Look comparing the doctor's view with its own](docs/alert.png)
+![Second Look comparing the doctor's view with its own](docs/img/alert.png)
 
 ## What it checks
 
@@ -33,7 +35,7 @@ Five synthetic A&E patients, each with a real ECG:
 | Emma, 52 | Reflux, fully worked up | Silent |
 | James, 48 | Musculoskeletal pain, fully worked up | Silent |
 
-![Linda's ECG with the flagged leads in amber](docs/linda_ecg.png)
+![Linda's ECG with the flagged leads in amber](docs/img/linda_ecg.png)
 
 ## ECG analysis
 
@@ -56,15 +58,33 @@ Results on the bundled recordings, compared with the PTB-XL cardiologist labels:
 
 This is seven records chosen for the demo, not a validation study. Record 3956 is the case the subtle-change band exists for: a confirmed infarct that a STEMI-threshold check alone would not flag. The fixed R-peak offsets are an approximation of the J-point and would need proper delineation for real use.
 
+## Two front ends, one engine
+
+- **Website** (`docs/`, served by GitHub Pages): the interactive demo. Static HTML, CSS and JavaScript with hand-drawn SVG ECGs on standard 25 mm/s, 10 mm/mV paper. It needs no server, so it opens instantly.
+- **Streamlit app** (`app.py`): the original hackathon prototype.
+
+Python is the source of truth. `scripts/export_web.py` runs the ECG signal processing and writes the signals, ST measurements, patients and every rule threshold to `docs/data/data.json`. `docs/engine.js` is a line-for-line JavaScript port of the rules engine, and the test suite checks it against the Python engine on more than 2,000 generated cases.
+
 ## Run it
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
+
+# Website
+python3 -m http.server -d docs 8000        # then open http://localhost:8000
+
+# Streamlit prototype
 .venv/bin/streamlit run app.py
 ```
 
-Tests (rules engine, ECG findings for every patient, and a click-through of the app):
+After changing `rules.py`, `ecg.py`, `patients.py` or `data/`, regenerate the website data:
+
+```bash
+.venv/bin/python scripts/export_web.py
+```
+
+Tests cover the rules engine, the ECG findings for every patient, a click-through of the Streamlit app, and JavaScript–Python parity (needs Node.js):
 
 ```bash
 .venv/bin/pip install pytest
@@ -75,10 +95,12 @@ Tests (rules engine, ECG findings for every patient, and a click-through of the 
 
 | File | Purpose |
 |---|---|
-| `app.py` | Streamlit interface: patient record, discharge check, hospital report |
+| `docs/` | Website: `index.html`, `app.js` (interface, SVG ECG drawing), `engine.js` (rules engine port), `data/data.json` |
+| `app.py` | Streamlit prototype: patient record, discharge check, hospital report |
 | `rules.py` | Rules engine. All clinical thresholds, symptom phrases and references are at the top of the file |
 | `ecg.py` | ECG loading, filtering, R-peak detection and ST measurement |
 | `patients.py` | Synthetic demo patients |
+| `scripts/export_web.py` | Exports signals, measurements and rule thresholds for the website |
 | `scripts/pick_records.py` | How the PTB-XL records were selected from `ptbxl_database.csv` |
 
 ## Limitations
